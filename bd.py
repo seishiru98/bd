@@ -350,8 +350,8 @@ df8_1 = df8_1.fillna('')
 table8_1 = table_counter.increment()
 header_text = f'Таблица {table8_1} – Условия проведения процесса демеркаптанизации'
 
-rows_per_page_first = 100  # Количество строк для первой таблицы
-rows_per_page_next = 100  # Количество строк для следующих таблиц
+rows_per_page_first = 17  # Количество строк для первой таблицы
+rows_per_page_next = 18  # Количество строк для следующих таблиц
 
 total_rows = len(df8_1)
 start_row = 0

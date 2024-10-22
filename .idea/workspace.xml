@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d65714c7-2c72-4580-a90f-a6b7e954dbb4" name="Changes" comment="add excel file">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dev_ol.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/t_ol.py" afterDir="false" />
+    <list default="true" id="d65714c7-2c72-4580-a90f-a6b7e954dbb4" name="Changes" comment="22/10/2024">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bd.py" beforeDir="false" afterPath="$PROJECT_DIR$/bd.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/database.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/device/1.xlsx" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +37,7 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/bd.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/bd.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/dev_ol.py" root0="SKIP_INSPECTION" />
   </component>
   <component name="ProjectColorInfo">{
@@ -54,21 +51,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.bd.executor": "Run",
-    "Python.dev_ol.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.bd.executor&quot;: &quot;Run&quot;,
+    &quot;Python.dev_ol.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
-  <component name="RunManager" selected="Python.dev_ol">
+}</component>
+  <component name="RunManager" selected="Python.bd">
     <configuration name="bd" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ksf" />
       <option name="ENV_FILES" value="" />
@@ -117,8 +114,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.dev_ol" />
         <item itemvalue="Python.bd" />
+        <item itemvalue="Python.dev_ol" />
       </list>
     </recent_temporary>
   </component>
@@ -139,7 +136,9 @@
       <option name="presentableId" value="Default" />
       <updated>1729059671979</updated>
       <workItem from="1729059673021" duration="7861000" />
-      <workItem from="1729229094556" duration="15599000" />
+      <workItem from="1729229094556" duration="15830000" />
+      <workItem from="1729485975775" duration="7312000" />
+      <workItem from="1729568080437" duration="13423000" />
     </task>
     <task id="LOCAL-00001" summary="add rep">
       <option name="closed" value="true" />
@@ -157,19 +156,71 @@
       <option name="project" value="LOCAL" />
       <updated>1729073157189</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="18/10/2024">
+      <option name="closed" value="true" />
+      <created>1729249587300</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1729249587300</updated>
+    </task>
+    <task id="LOCAL-00004" summary="22/10/2024">
+      <option name="closed" value="true" />
+      <created>1729586592799</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1729586592799</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+        <option value="GitHub.CommitStatus" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="master/master" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="add rep" />
     <MESSAGE value="add excel file" />
-    <option name="LAST_COMMIT_MESSAGE" value="add excel file" />
+    <MESSAGE value="18/10/2024" />
+    <MESSAGE value="22/10/2024" />
+    <option name="LAST_COMMIT_MESSAGE" value="22/10/2024" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/ksf$dev_ol.coverage" NAME="dev_ol Coverage Results" MODIFIED="1729247829900" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/ksf$bd.coverage" NAME="bd Coverage Results" MODIFIED="1729230990585" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ksf$dev_ol.coverage" NAME="dev_ol Coverage Results" MODIFIED="1729249502302" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ksf$bd.coverage" NAME="bd Coverage Results" MODIFIED="1729585506270" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

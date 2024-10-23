@@ -215,11 +215,6 @@ def read_excel_data(filename, sheet_name):
 # Переменные
 database = pd.read_excel('database.xlsx', sheet_name='1')
 
-min_flow_rate = database.iloc[18, 3]
-print(min_flow_rate)
-flow_rate = database.iloc[19, 3]
-print(flow_rate)
-
 work_time = database.iloc[0, 3]
 print(work_time)
 
@@ -232,6 +227,11 @@ ppm_tiols = mass_frac_tiols * 10000
 print(ppm_tiols)
 ppm_sulphur = mass_frac_sulphur * 10000
 print(ppm_sulphur)
+
+min_flow_rate = database.iloc[18, 3]
+print(min_flow_rate)
+flow_rate = database.iloc[19, 3]
+print(flow_rate)
 
 MPS_calc_p, MPS_calc_t = database.iloc[55, 1], database.iloc[55, 2]
 print(MPS_calc_p, MPS_calc_t)
@@ -247,6 +247,16 @@ water_direct_p, water_direct_t = database.iloc[65, 1], database.iloc[65, 2]
 print(water_direct_p, water_direct_t)
 water_reversed_p, water_reversed_t = database.iloc[75, 1], database.iloc[75, 2]
 print(water_reversed_p, water_reversed_t)
+
+LPG_Nitrogen_calc_p, LPG_Nitrogen_calc_t = database.iloc[105, 1], database.iloc[105, 2]
+print(LPG_Nitrogen_calc_p, LPG_Nitrogen_calc_t)
+LPG_Nitrogen_work_p, LPG_Nitrogen_work_t = database.iloc[106, 1], database.iloc[106, 2]
+print(LPG_Nitrogen_work_p, LPG_Nitrogen_work_t)
+
+HPG_Nitrogen_calc_p, HPG_Nitrogen_calc_t = database.iloc[112, 1], database.iloc[112, 2]
+print(HPG_Nitrogen_calc_p, HPG_Nitrogen_calc_t)
+HPG_Nitrogen_work_p, HPG_Nitrogen_work_t = database.iloc[113, 1], database.iloc[113, 2]
+print(HPG_Nitrogen_work_p, HPG_Nitrogen_work_t)
 
 air_calc_p, air_calc_t_min, air_calc_t_max = database.iloc[119, 1], database.iloc[119, 2], database.iloc[119, 3]
 print(air_calc_p, air_calc_t_min, air_calc_t_max)
@@ -456,6 +466,11 @@ for line in text:
                          line_spacing=22, space_after=0, space_before=0)
 
 table5_1 = table_counter.increment()
+table5_2 = table_counter.increment()
+table5_3 = table_counter.increment()
+table5_4 = table_counter.increment()
+table5_5 = table_counter.increment()
+
 df5_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.1')
 add_header(doc, f'Таблица {table5_1:.1f} Физико-химические показатели качества сырья, поступающего на блок "Demerus Jet"')
 add_table(doc, df5_1, merged_ranges)
@@ -474,7 +489,6 @@ for line in text:
     set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
                          line_spacing=22, space_after=0, space_before=0)
 
-table5_2 = table_counter.increment()
 df5_2, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.2')
 add_header(doc, f'Таблица {table5_2:.1f} Характеристика керосиновой фракции - сырья блока «Demerus Jet»')
 add_table(doc, df5_2, merged_ranges)
@@ -482,18 +496,18 @@ add_table(doc, df5_2, merged_ranges)
 text = [f'',
         f'Целевым продуктом блока "Demerus Jet" является керосиновая фракция с массовой долей меркаптановой серы не более 30 ppm, сероводород – отсутствие. Концентрация общей серы остается без изменений в диапазоне 0,114÷0,116 % мас.',
         f'',
-        f'К основным материалам относятся:',
+        f'К основным материалам относятся (характеристики представлены в таблице {table5_5:.1f}):',
         f'- гетерогенный катализатор КСМ-Х, изготавливаемый в соответствии с ТУ 2175-001-40655797-2014',
         f'- глина отбеливающая (бентонитовая); ',
-        f'-  γ – оксид алюминия по ТУ 6-09-426-75;',
+        f'- γ – оксид алюминия по ТУ 6-09-426-75;',
         f'- шары фарфоровые номинальный диаметр шара 3 мм, изготовляются в соответствии с ТУ 4328-030-07608911-2015. Материал - фарфор по ГОСТ 20419-83;',
-        f'- воздух сжатый (КИП, технологический) с давлением {air_work_p} (рабочее), {air_calc_p} (расчетное) МПа и температурой {air_work_t} (рабочая), {air_calc_t_min}/{air_calc_t_max} (расчетная) ℃;',
-        f'- пар среднего давления с давлением {MPS_work_p} (рабочее), {MPS_calc_p} (расчетное) МПа (изб.) и температурой {MPS_work_t} (рабочая), {MPS_calc_t} (расчетная) ℃;',
-        f'- пар низкого давления с давлением {LPS_work_p} (рабочее), {LPS_calc_p} (расчетное) МПа (изб.) и температурой {LPS_work_t} (рабочая), {LPS_calc_t} (расчетная) ℃;',
-        f'- оборотная вода прямая с давлением {water_direct_p} МПа (изб.) и температурой {water_direct_t} ℃;',
-        f'- оборотная вода обратная с давлением {water_reversed_p} МПа (изб.) и температурой {water_reversed_t} ℃;',
-        f'Инертный газ низкого давления (Азот) ',
-        f'Инертный газ высокого давления (Азот) ',
+        f'- воздух сжатый (КИП, технологический);',
+        f'- пар среднего давления;',
+        f'- пар низкого давления;',
+        f'- оборотная вода прямая;',
+        f'- оборотная вода обратная;',
+        f'- инертный газ низкого давления (Азот);',
+        f'- инертный газ высокого давления (Азот);',
         f'- деминерализованная вода для приготовления водных растворов NaOH и КОН;',
         f'- промотор КСП(ж), соответствует ТУ 0258-015-00151638-ОП-99. В качестве промотора КСП (тв.) используется калия гидрат окиси твердый – КОН. Промотор КСП(ж) образуется в ходе эксплуатации установки из продуктов взаимодействия кислых примесей керосина с гидроксидом калия и кислородом воздуха на поверхности гетерогенного катализатора КСМ-Х. Необходимость в закупки КСП(ж) отсутствует. ',
         f'Промотор КСП(ж) представляет собой темно-коричневую жидкость с плотностью не менее 1,3 кг/дм3. При гравиметрическом отстаивании он расслаивается на два слоя: светлый тяжелый (КСП(ж)) и темный легкий (калиевые соли нафтеновых кислот). Хранится при температуре не ниже 5оС. ',
@@ -508,7 +522,6 @@ for line in text:
     set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
                          line_spacing=22, space_after=0, space_before=0)
 
-table5_3 = table_counter.increment()
 df5_3, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.3')
 add_header(doc, f'Таблица {table5_3:.1f} Характеристика керосиновой фракции - сырья блока «Demerus Jet»')
 add_table(doc, df5_3, merged_ranges)
@@ -523,7 +536,6 @@ for line in text:
     set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
                          line_spacing=22, space_after=0, space_before=0)
 
-table5_4 = table_counter.increment()
 df5_4, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.4')
 add_header(doc, f'Таблица {table5_4:.1f} – Физико-химические характеристики КСП (ж)')
 add_table(doc, df5_4, merged_ranges)
@@ -539,6 +551,31 @@ for line in text:
     set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
                          line_spacing=22, space_after=0, space_before=0)
 
+
+# Добавление нового раздела
+new_section = doc.add_section(WD_SECTION.NEW_PAGE)
+
+# Установка ориентации
+new_section.orientation = WD_ORIENT.PORTRAIT
+
+# Убедимся, что размеры страницы корректны для альбомной ориентации
+if new_section.page_width < new_section.page_height:
+    new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+
+df5_5, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.5')
+add_header(doc, f'Таблица {table5_4:.1f} – Характеристика основных и вспомогательных материалов')
+add_table(doc, df5_5, merged_ranges)
+
+text = [f''
+       ]
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
 #-----------------------------------------------------------------------------------------------------------------------
 
 # Сохраняем документ

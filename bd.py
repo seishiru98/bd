@@ -563,8 +563,105 @@ if new_section.page_width < new_section.page_height:
     new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
 
 df5_5, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.5')
-add_header(doc, f'Таблица {table5_4:.1f} – Характеристика основных и вспомогательных материалов')
+add_header(doc, f'Таблица {table5_5:.1f} – Характеристика основных и вспомогательных материалов')
 add_table(doc, df5_5, merged_ranges)
+
+text = [f''
+       ]
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
+
+
+# Добавление нового раздела
+new_section = doc.add_section(WD_SECTION.NEW_PAGE)
+
+# Установка ориентации
+new_section.orientation = WD_ORIENT.PORTRAIT
+
+# Убедимся, что размеры страницы корректны для альбомной ориентации
+if new_section.page_width > new_section.page_height:
+    new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+
+ch_6 = head_counter.increment()
+
+heading = doc.add_heading(f'{ch_6:.0f} ТЕХНИЧЕСКАЯ ХАРАКТЕРИСТИКА ОТХОДОВ И ОТРАБОТАННОГО ВОЗДУХА', level=1)
+heading.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+for run in heading.runs:
+    set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(heading, left_indent=0.0, right_indent=0.0, first_line_indent=1.25, line_spacing=22,
+                         space_after=0, space_before=0)
+
+text = [f'',
+        f'']
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
+
+
+text = [f'Отходами или выбросами с блока «Demerus Jet» могут быть:',
+        '1) Отработанная глина. Срок эксплуатации – 6 месяцев. Вывозят специализированными организациями на утилизацию.',
+        '2) Отработанный γ-оксид алюминия. Срок эксплуатации – 6 месяцев. Вывозят специализированными организациями на утилизацию. ',
+        '3) Отработанный катализатор КСМ-Х, при потере его стабильности вследствие нарушения предписанных ТУ правил хранения и эксплуатации, либо по истечении гарантийного срока службы катализатора. Код отхода по Федеральному классификационному каталогу отходов ФККО 2017 - 4 41 006 01 49 3 катализатор на основе пропилена с содержанием фталоциандисульфата кобальта менее 15,0 % отработанный.',
+        '4) Отработанные фарфоровые шары. Срок эксплуатации – 8 лет. Направляются на полигон для захоронения.',
+        ''
+       ]
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
+
+table6_1 = table_counter.increment()
+table6_2 = table_counter.increment()
+table6_3 = table_counter.increment()
+
+df6_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '6.1')
+add_header(doc, f'Таблица {table6_1:.1f} – Характеристика побочных продуктов и выбросов в пересчёте на тонну перерабатываемого сырья')
+add_table(doc, df6_1, merged_ranges)
+
+text = [f''
+       ]
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
+
+df6_2, merged_ranges = read_excel_with_merged_cells('database.xlsx', '6.2')
+add_header(doc, f'Таблица {table6_2:.1f} – Техническая характеристика побочных продуктов')
+add_table(doc, df6_2, merged_ranges)
+
+text = [f''
+       ]
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
+
+df6_3, merged_ranges = read_excel_with_merged_cells('database.xlsx', '6.3')
+add_header(doc, f'Таблица {table6_3:.1f} – Условия сбора, хранения, транспортирования, складирования и захоронения отходов')
+add_table(doc, df6_3, merged_ranges)
 
 text = [f''
        ]

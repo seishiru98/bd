@@ -673,6 +673,8 @@ for line in text:
         set_font(run, 'Times New Roman', 14)
     set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
                          line_spacing=22, space_after=0, space_before=0)
+
+
 #-----------------------------------------------------------------------------------------------------------------------
 
 # Сохраняем документ

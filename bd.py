@@ -675,6 +675,67 @@ for line in text:
                          line_spacing=22, space_after=0, space_before=0)
 
 
+# Добавление нового раздела
+new_section = doc.add_section(WD_SECTION.NEW_PAGE)
+
+# Установка ориентации
+new_section.orientation = WD_ORIENT.PORTRAIT
+
+# Убедимся, что размеры страницы корректны для книжной ориентации
+if new_section.page_width > new_section.page_height:
+    new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+
+ch_10 = head_counter.increment()
+
+heading = doc.add_heading(f'{ch_10:.0f} МАТЕРИАЛЬНЫЙ БАЛАНС ПРОЦЕССА', level=1)
+heading.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+for run in heading.runs:
+    set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(heading, left_indent=0.0, right_indent=0.0, first_line_indent=1.25, line_spacing=22,
+                         space_after=0, space_before=0)
+
+text = [f'',
+        f'']
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
+
+text = [f'Исходные данные для расчета материального баланса',
+        f'',
+        f'Материальный баланс установки демеркаптанизации керосиновой фракции («Demerus-Jet») составлен в соответствии со следующим расчетом:',
+        f'']
+
+for line in text:
+    paragraph_after_break = doc.add_paragraph(line)
+    paragraph_after_break.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    for run in paragraph_after_break.runs:
+        set_font(run, 'Times New Roman', 14)
+    set_paragraph_format(paragraph_after_break, left_indent=0.0, right_indent=0.0, first_line_indent=1.25,
+                         line_spacing=22, space_after=0, space_before=0)
+
+# Добавление нового раздела
+new_section = doc.add_section(WD_SECTION.NEW_PAGE)
+
+# Установка ориентации
+new_section.orientation = WD_ORIENT.PORTRAIT
+
+# Убедимся, что размеры страницы корректны для альбомной ориентации
+if new_section.page_width < new_section.page_height:
+    new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+
+table10_1 = table_counter.increment()
+table10_2 = table_counter.increment()
+table10_3 = table_counter.increment()
+
+df10_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '10.1')
+add_header(doc, f'Таблица {table10_1:.1f} – Материальный баланс установки демеркаптанизации керосиновой фракции')
+add_table(doc, df10_1, merged_ranges)
+
 #-----------------------------------------------------------------------------------------------------------------------
 
 # Сохраняем документ

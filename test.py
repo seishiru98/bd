@@ -1,4 +1,3 @@
-
 from docx import Document
 from docx.shared import Pt, Cm
 from docx.oxml.ns import qn
@@ -48,93 +47,129 @@ def set_paragraph_format(paragraph, left_indent=0, right_indent=0, first_line_in
     paragraph_format.space_after = Cm(space_after)
     paragraph_format.space_before = Cm(space_before)
 
+
 def add_header(doc, header_text):
     paragraph = doc.add_paragraph()
     run = paragraph.add_run(header_text)
     run.font.size = Pt(14)
     run.font.name = 'Times New Roman'
+    run._element.rPr.rFonts.set(qn('w:eastAsia'), 'Times New Roman')
     paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
-def add_table(doc, df, merged_ranges, max_rows_per_page=25):
-    total_width = Cm(18.5)  # Ширина страницы
 
-    # Определение максимальной длины текста для каждой колонки
-    column_widths = [0] * len(df.columns)
-    for _, row in df.iterrows():
-        for i, value in enumerate(row):
-            if pd.notna(value) and str(value).strip() != "":
-                column_widths[i] = max(column_widths[i], len(str(value)))
-    total_text_length = sum(column_widths)
+def add_table(doc, df, start_row, end_row, merged_ranges, include_header=True):
+    # Сначала определим максимальную ширину каждой колонки
+    max_col_widths = []
+    for col in df.columns:
+        # Вычисляем максимальную длину текста для каждой колонки
+        max_width = max(df[col][start_row:end_row].apply(lambda x: len(str(x)) if x is not None else 0))
+        max_col_widths.append(max_width)
 
-    def add_page_table(df_page, merged_ranges):
-        table = doc.add_table(rows=len(df_page) + 1, cols=len(df.columns))
-        table.style = 'Table Grid'
+    # Устанавливаем базовый множитель для ширины (можно корректировать по необходимости)
+    width_multiplier = 0.05  # Выберите подходящий множитель для точной подстройки
 
-        # Заголовки таблицы
-        hdr_cells = table.rows[0].cells
+    # Вычислим итоговую ширину для каждого столбца в сантиметрах
+    col_widths = [Cm(width * width_multiplier) for width in max_col_widths]
+
+    # Создаем таблицу с количеством столбцов, равным числу колонок в DataFrame
+    num_columns = len(df.columns)
+    table = doc.add_table(rows=0, cols=num_columns)
+    table.style = 'Table Grid'
+
+    # Добавляем заголовок таблицы, если включен параметр include_header
+    if include_header:
+        hdr_cells = table.add_row().cells
         for i, column_name in enumerate(df.columns):
-            hdr_cells[i].width = Cm(total_width.cm * (column_widths[i] / total_text_length))
-            hdr_cells[i].text = column_name
-            set_paragraph_format(hdr_cells[i].paragraphs[0], line_spacing=18)
+            hdr_cells[i].width = col_widths[i]  # Применяем ширину к заголовкам
+            cell_paragraph = hdr_cells[i].paragraphs[0]
+            cell_paragraph.text = str(column_name)
+            cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+            for run in cell_paragraph.runs:
+                set_font(run, 'Times New Roman', 12, bold=False)
+            set_paragraph_format(cell_paragraph, left_indent=0.0, right_indent=0.0,
+                                 first_line_indent=0.0, line_spacing=18, space_after=0, space_before=0)
 
-        # Заполнение данных
-        for idx, row in df_page.iterrows():
-            if idx + 1 < len(table.rows):
-                row_cells = table.rows[idx + 1].cells
-                for i, value in enumerate(row):
-                    row_cells[i].width = Cm(total_width.cm * (column_widths[i] / total_text_length))
-                    cell_paragraph = row_cells[i].paragraphs[0]
-                    cell_paragraph.text = str(value) if pd.notna(value) else ""
-                    set_paragraph_format(cell_paragraph, line_spacing=18)
+    # Добавление строк таблицы
+    for index in range(start_row, end_row):
+        row = df.iloc[index]
+        row_cells = table.add_row().cells
+        for i, value in enumerate(row):
+            row_cells[i].width = col_widths[i]  # Применяем ширину к каждой ячейке строки
+            cell_paragraph = row_cells[i].paragraphs[0]
+            cell_paragraph.text = str(value)
+            cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+            for run in cell_paragraph.runs:
+                set_font(run, 'Times New Roman', 12)
+            set_paragraph_format(cell_paragraph, left_indent=0.0, right_indent=0.0,
+                                 first_line_indent=0.0, line_spacing=18, space_after=0, space_before=0)
 
-        # Объединение ячеек для текущей страницы
-        for merged_range in merged_ranges:
-            min_col, min_row, max_col, max_row = merged_range.bounds
-            if min_row - 1 < len(df_page) + 1 and max_row - 1 < len(df_page) + 1:
-                start_cell = table.cell(min_row - 1, min_col - 1)
-                end_cell = table.cell(max_row - 1, max_col - 1)
-                start_cell.merge(end_cell)
+    # Корректировка для индексации строк
+    header_offset = 1 if include_header else 0
 
-    # Разбиение таблицы на страницы
-    for start_row in range(0, len(df), max_rows_per_page):
-        df_page = df.iloc[start_row:start_row + max_rows_per_page]
-        add_page_table(df_page, merged_ranges)
-        if start_row + max_rows_per_page < len(df):
-            doc.add_page_break()
+    # Обработка объединённых ячеек
+    for merged_range in merged_ranges:
+        min_col, min_row, max_col, max_row = merged_range.bounds
+        min_col -= 1  # Преобразование к нулевой базе
+        max_col -= 1
+
+        # Корректировка индексов строк для DataFrame
+        min_row_df = min_row - 2  # -2, потому что DataFrame начинается с Excel строки 2 и индексируется с 0
+        max_row_df = max_row - 2
+
+        # Проверяем, попадает ли объединённый диапазон в текущий диапазон строк
+        if min_row_df >= start_row and max_row_df < end_row:
+            start_cell_row = (min_row_df - start_row) + header_offset
+            end_cell_row = (max_row_df - start_row) + header_offset
+
+            start_cell_col = min_col
+            end_cell_col = max_col
+
+            start_cell = table.cell(int(start_cell_row), int(start_cell_col))
+            end_cell = table.cell(int(end_cell_row), int(end_cell_col))
+            start_cell.merge(end_cell)
+
+            # Удаляем лишние пустые параграфы из объединенной ячейки
+            for paragraph in start_cell.paragraphs:
+                if not paragraph.text.strip():
+                    p = paragraph._element
+                    p.getparent().remove(p)
+                    p._p = p._element = None
+
+
+def insert_page_break(doc):
+    doc.add_page_break()
 
 
 def read_excel_with_merged_cells(filename, sheet_name):
-    # Загружаем Excel-файл
+    # Загружаем Excel-файл с помощью openpyxl
     wb = load_workbook(filename, data_only=True)
-
-    # Проверка наличия листа
-    if sheet_name not in wb.sheetnames:
-        raise ValueError(f"Лист '{sheet_name}' не найден в файле '{filename}'.")
-
     ws = wb[sheet_name]
 
-    # Извлечение данных
+    # Сохраняем данные в список строк (list of lists)
     data = []
     for row in ws.iter_rows(values_only=True):
-        data_row = []
-        for cell in row:
-            data_row.append(cell if cell is not None else "")
-        data.append(data_row)
+        data.append(list(row))
 
-    # Получение объединенных диапазонов
+    # Получаем объединенные ячейки
     merged_ranges = ws.merged_cells.ranges
 
+    # Проходим по каждому объединенному диапазону и заполняем его данные
     for merged_range in merged_ranges:
+        # Получаем диапазон объединённых ячеек
         min_col, min_row, max_col, max_row = merged_range.bounds
+
+        # Получаем значение из первой ячейки диапазона
         merged_value = ws.cell(row=min_row, column=min_col).value
+
+        # Присваиваем это значение только первой ячейке, остальные оставляем пустыми
         for row in range(min_row - 1, max_row):
             for col in range(min_col - 1, max_col):
                 if row == min_row - 1 and col == min_col - 1:
                     data[row][col] = merged_value
                 else:
-                    data[row][col] = ''
+                    data[row][col] = ''  # Оставляем остальные ячейки пустыми
 
-    # Преобразование в DataFrame pandas
+    # Преобразуем данные в DataFrame pandas
     df = pd.DataFrame(data[1:], columns=data[0])
     return df, merged_ranges
 
@@ -196,61 +231,8 @@ def read_excel_data(filename, sheet_name):
     except Exception as e:
         print(f"ОШИБКА: Произошла ошибка при чтении файла {filename}: {e}")
 
-
 #-----------------------------------------------------------------------------------------------------------------------
-# Переменные
-database = pd.read_excel('database.xlsx', sheet_name='1')
 
-work_time = database.iloc[0, 3]
-print(work_time)
-
-mass_frac_tiols = database.iloc[15, 4]
-print(mass_frac_tiols)
-mass_frac_sulphur = database.iloc[16, 4]
-print(mass_frac_sulphur)
-
-ppm_tiols = mass_frac_tiols * 10000
-print(ppm_tiols)
-ppm_sulphur = mass_frac_sulphur * 10000
-print(ppm_sulphur)
-
-min_flow_rate = database.iloc[18, 3]
-print(min_flow_rate)
-flow_rate = database.iloc[19, 3]
-print(flow_rate)
-
-MPS_calc_p, MPS_calc_t = database.iloc[55, 1], database.iloc[55, 2]
-print(MPS_calc_p, MPS_calc_t)
-MPS_work_p, MPS_work_t = database.iloc[56, 1], database.iloc[56, 2]
-print(MPS_work_p, MPS_work_t)
-
-LPS_calc_p, LPS_calc_t = database.iloc[60, 1], database.iloc[60, 2]
-print(LPS_calc_p, LPS_calc_t)
-LPS_work_p, LPS_work_t = database.iloc[61, 1], database.iloc[61, 2]
-print(LPS_work_p, LPS_work_t)
-
-water_direct_p, water_direct_t = database.iloc[65, 1], database.iloc[65, 2]
-print(water_direct_p, water_direct_t)
-water_reversed_p, water_reversed_t = database.iloc[75, 1], database.iloc[75, 2]
-print(water_reversed_p, water_reversed_t)
-
-LPG_Nitrogen_calc_p, LPG_Nitrogen_calc_t = database.iloc[105, 1], database.iloc[105, 2]
-print(LPG_Nitrogen_calc_p, LPG_Nitrogen_calc_t)
-LPG_Nitrogen_work_p, LPG_Nitrogen_work_t = database.iloc[106, 1], database.iloc[106, 2]
-print(LPG_Nitrogen_work_p, LPG_Nitrogen_work_t)
-
-HPG_Nitrogen_calc_p, HPG_Nitrogen_calc_t = database.iloc[112, 1], database.iloc[112, 2]
-print(HPG_Nitrogen_calc_p, HPG_Nitrogen_calc_t)
-HPG_Nitrogen_work_p, HPG_Nitrogen_work_t = database.iloc[113, 1], database.iloc[113, 2]
-print(HPG_Nitrogen_work_p, HPG_Nitrogen_work_t)
-
-air_calc_p, air_calc_t_min, air_calc_t_max = database.iloc[119, 1], database.iloc[119, 2], database.iloc[119, 3]
-print(air_calc_p, air_calc_t_min, air_calc_t_max)
-air_work_p, air_work_t = database.iloc[120, 1], database.iloc[120, 2]
-print(air_work_p, air_work_t)
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 ch_10 = head_counter.increment()
 
 heading = doc.add_heading(f'{ch_10:.0f} МАТЕРИАЛЬНЫЙ БАЛАНС ПРОЦЕССА', level=1)
@@ -294,14 +276,75 @@ new_section.orientation = WD_ORIENT.PORTRAIT
 if new_section.page_width < new_section.page_height:
     new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
 
-table10_1 = table_counter.increment()
-table10_2 = table_counter.increment()
-table10_3 = table_counter.increment()
 
-df10_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '10.1')
-add_header(doc, f'Таблица {table10_1:.1f} – Материальный баланс установки демеркаптанизации керосиновой фракции')
-add_table(doc, df10_1, merged_ranges)
+# Чтение данных из Excel с учётом объединённых ячеек
+df2_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '10.1')
 
+# Инициализация счётчика для таблиц
+ch_2_par_1 = table_counter.increment()
+
+header_text_first = f'Таблица {ch_2_par_1:.1f} – Содержание общей серы в СУГ после демеркаптанизации на гомогенных и гетерогенных катализаторах'
+header_text_next = f'Продолжение таблицы {ch_2_par_1:.1f} – Содержание общей серы в СУГ после демеркаптанизации на гомогенных и гетерогенных катализаторах'
+
+rows_per_page_first = 18  # Количество строк для первой таблицы
+rows_per_page_next = 18  # Количество строк для следующих таблиц
+
+total_rows = len(df2_1)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df2_1, start_row, end_row, merged_ranges, include_header=False)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df2_1, start_row, end_row, merged_ranges, include_header=False)
+    start_row = end_row
+
+# Добавление нового раздела
+new_section = doc.add_section(WD_SECTION.NEW_PAGE)
+
+# Установка ориентации
+new_section.orientation = WD_ORIENT.PORTRAIT
+
+# Убедимся, что размеры страницы корректны для альбомной ориентации
+if new_section.page_width > new_section.page_height:
+    new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+
+
+# Чтение данных из Excel с учётом объединённых ячеек
+df2_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.3')
+
+# Инициализация счётчика для таблиц
+ch_2_par_1 = table_counter.increment()
+
+header_text_first = f'Таблица {ch_2_par_1:.1f} – Содержание общей серы в СУГ после демеркаптанизации на гомогенных и гетерогенных катализаторах'
+header_text_next = f'Продолжение таблицы {ch_2_par_1:.1f} – Содержание общей серы в СУГ после демеркаптанизации на гомогенных и гетерогенных катализаторах'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 18  # Количество строк для следующих таблиц
+
+total_rows = len(df2_1)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df2_1, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df2_1, start_row, end_row, merged_ranges, include_header=False)
+    start_row = end_row
 #-----------------------------------------------------------------------------------------------------------------------
 
 # Сохраняем документ

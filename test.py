@@ -57,19 +57,22 @@ def add_header(doc, header_text):
     paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
 
+from docx.shared import Cm
+
+
 def add_table(doc, df, start_row, end_row, merged_ranges, include_header=True):
-    # Сначала определим максимальную ширину каждой колонки
+    total_width = Cm(18.5)  # Общая ширина таблицы (например, вся ширина страницы)
     max_col_widths = []
+
+    # Определим максимальную длину текста для каждой колонки
     for col in df.columns:
-        # Вычисляем максимальную длину текста для каждой колонки
         max_width = max(df[col][start_row:end_row].apply(lambda x: len(str(x)) if x is not None else 0))
         max_col_widths.append(max_width)
 
-    # Устанавливаем базовый множитель для ширины (можно корректировать по необходимости)
-    width_multiplier = 0.05  # Выберите подходящий множитель для точной подстройки
-
-    # Вычислим итоговую ширину для каждого столбца в сантиметрах
-    col_widths = [Cm(width * width_multiplier) for width in max_col_widths]
+    # Пропорциональная ширина колонок относительно их максимального содержания
+    total_content_width = sum(max_col_widths)
+    col_width_ratios = [width / total_content_width for width in max_col_widths]
+    col_widths = [total_width * ratio for ratio in col_width_ratios]
 
     # Создаем таблицу с количеством столбцов, равным числу колонок в DataFrame
     num_columns = len(df.columns)
@@ -80,7 +83,7 @@ def add_table(doc, df, start_row, end_row, merged_ranges, include_header=True):
     if include_header:
         hdr_cells = table.add_row().cells
         for i, column_name in enumerate(df.columns):
-            hdr_cells[i].width = col_widths[i]  # Применяем ширину к заголовкам
+            hdr_cells[i].width = col_widths[i]  # Применяем пропорциональную ширину к заголовкам
             cell_paragraph = hdr_cells[i].paragraphs[0]
             cell_paragraph.text = str(column_name)
             cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
@@ -94,7 +97,7 @@ def add_table(doc, df, start_row, end_row, merged_ranges, include_header=True):
         row = df.iloc[index]
         row_cells = table.add_row().cells
         for i, value in enumerate(row):
-            row_cells[i].width = col_widths[i]  # Применяем ширину к каждой ячейке строки
+            row_cells[i].width = col_widths[i]  # Применяем пропорциональную ширину к каждой ячейке строки
             cell_paragraph = row_cells[i].paragraphs[0]
             cell_paragraph.text = str(value)
             cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY

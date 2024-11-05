@@ -58,61 +58,83 @@ def add_header(doc, header_text):
     paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
 
-def add_table(doc, df, merged_ranges):
-    # Общая ширина таблицы в сантиметрах
-    total_width = Cm(18.5)  # Примерная ширина текста на странице A4 с полями
+def add_table(doc, df, start_row, end_row, merged_ranges, include_header=True):
+    total_width = Cm(25.5)  # Общая ширина таблицы (например, вся ширина страницы)
+    max_col_widths = []
 
-    # Определяем таблицу и стиль
-    table = doc.add_table(rows=len(df) + 1, cols=len(df.columns))
+    # Определим максимальную длину текста для каждой колонки
+    for col in df.columns:
+        max_width = max(df[col][start_row:end_row].apply(lambda x: len(str(x)) if x is not None else 0))
+        max_col_widths.append(max_width)
+
+    # Пропорциональная ширина колонок относительно их максимального содержания
+    total_content_width = sum(max_col_widths)
+    col_width_ratios = [width / total_content_width for width in max_col_widths]
+    col_widths = [total_width * ratio for ratio in col_width_ratios]
+
+    # Создаем таблицу с количеством столбцов, равным числу колонок в DataFrame
+    num_columns = len(df.columns)
+    table = doc.add_table(rows=0, cols=num_columns)
     table.style = 'Table Grid'
 
-    # Игнорируем первую строку, чтобы определить максимальную длину текста в каждой колонке
-    column_widths = [0] * len(df.columns)
-
-    # Добавляем строки с данными и определяем максимальную длину текста в каждом столбце
-    for index, row in df.iterrows():
-        for i, value in enumerate(row):
-            if pd.notna(value) and str(value).strip() != "":
-                column_widths[i] = max(column_widths[i], len(str(value)))
-
-    # Вычисляем общую длину текста для пропорциональной настройки ширины столбцов
-    total_text_length = sum(column_widths)
-
-    # Добавление заголовков таблицы
-    hdr_cells = table.rows[0].cells
-    for i, column_name in enumerate(df.columns):
-        hdr_cells[i].width = Cm(total_width.cm * (column_widths[i] / total_text_length))  # Задаем ширину на основе данных
-        cell_paragraph = hdr_cells[i].paragraphs[0]
-        cell_paragraph.text = column_name
-        cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-        for run in cell_paragraph.runs:
-            set_font(run, 'Times New Roman', 12)  # Шрифт для заголовков
-        set_paragraph_format(cell_paragraph, left_indent=0.0, right_indent=0.0, first_line_indent=0.0,
-                             line_spacing=18, space_after=0, space_before=0)
+    # Добавляем заголовок таблицы, если включен параметр include_header
+    if include_header:
+        hdr_cells = table.add_row().cells
+        for i, column_name in enumerate(df.columns):
+            hdr_cells[i].width = col_widths[i]  # Применяем пропорциональную ширину к заголовкам
+            cell_paragraph = hdr_cells[i].paragraphs[0]
+            cell_paragraph.text = str(column_name)
+            cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+            for run in cell_paragraph.runs:
+                set_font(run, 'Times New Roman', 12, bold=False)
+            set_paragraph_format(cell_paragraph, left_indent=0.0, right_indent=0.0,
+                                 first_line_indent=0.0, line_spacing=18, space_after=0, space_before=0)
 
     # Добавление строк таблицы
-    for index, row in df.iterrows():
-        row_cells = table.rows[index + 1].cells
+    for index in range(start_row, end_row):
+        row = df.iloc[index]
+        row_cells = table.add_row().cells
         for i, value in enumerate(row):
-            row_cells[i].width = Cm(total_width.cm * (column_widths[i] / total_text_length))  # Задаем ширину для ячеек на основе данных
-            if pd.notna(value) and str(value).strip() != "":
-                cell_paragraph = row_cells[i].paragraphs[0]
-                cell_paragraph.text = str(value)
-                cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-                for run in cell_paragraph.runs:
-                    set_font(run, 'Times New Roman', 12)
-                set_paragraph_format(cell_paragraph, left_indent=0.0, right_indent=0.0, first_line_indent=0.0,
-                                     line_spacing=18, space_after=0, space_before=0)
+            row_cells[i].width = col_widths[i]  # Применяем пропорциональную ширину к каждой ячейке строки
+            cell_paragraph = row_cells[i].paragraphs[0]
+            cell_paragraph.text = str(value)
+            cell_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+            for run in cell_paragraph.runs:
+                set_font(run, 'Times New Roman', 12)
+            set_paragraph_format(cell_paragraph, left_indent=0.0, right_indent=0.0,
+                                 first_line_indent=0.0, line_spacing=18, space_after=0, space_before=0)
 
-    # Объединение ячеек в Word на основе объединённых диапазонов из Excel
+    # Корректировка для индексации строк
+    header_offset = 1 if include_header else 0
+
+    # Обработка объединённых ячеек
     for merged_range in merged_ranges:
         min_col, min_row, max_col, max_row = merged_range.bounds
-        for row in range(min_row, max_row + 1):
-            for col in range(min_col, max_col + 1):
-                if row == min_row and col == min_col:
-                    start_cell = table.cell(min_row - 1, min_col - 1)
-                    end_cell = table.cell(max_row - 1, max_col - 1)
-                    start_cell.merge(end_cell)
+        min_col -= 1  # Преобразование к нулевой базе
+        max_col -= 1
+
+        # Корректировка индексов строк для DataFrame
+        min_row_df = min_row - 2  # -2, потому что DataFrame начинается с Excel строки 2 и индексируется с 0
+        max_row_df = max_row - 2
+
+        # Проверяем, попадает ли объединённый диапазон в текущий диапазон строк
+        if min_row_df >= start_row and max_row_df < end_row:
+            start_cell_row = (min_row_df - start_row) + header_offset
+            end_cell_row = (max_row_df - start_row) + header_offset
+
+            start_cell_col = min_col
+            end_cell_col = max_col
+
+            start_cell = table.cell(int(start_cell_row), int(start_cell_col))
+            end_cell = table.cell(int(end_cell_row), int(end_cell_col))
+            start_cell.merge(end_cell)
+
+            # Удаляем лишние пустые параграфы из объединенной ячейки
+            for paragraph in start_cell.paragraphs:
+                if not paragraph.text.strip():
+                    p = paragraph._element
+                    p.getparent().remove(p)
+                    p._p = p._element = None
 
 
 def insert_page_break(doc):
@@ -472,8 +494,30 @@ table5_4 = table_counter.increment()
 table5_5 = table_counter.increment()
 
 df5_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.1')
-add_header(doc, f'Таблица {table5_1:.1f} Физико-химические показатели качества сырья, поступающего на блок "Demerus Jet"')
-add_table(doc, df5_1, merged_ranges)
+
+header_text_first = f'Таблица {table5_1:.1f} – Физико-химические показатели качества сырья, поступающего на блок "Demerus Jet"'
+header_text_next = f'Продолжение таблицы {table5_1:.1f} – Физико-химические показатели качества сырья, поступающего на блок "Demerus Jet"'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 100  # Количество строк для следующих таблиц
+
+total_rows = len(df5_1)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df5_1, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df5_1, start_row, end_row, merged_ranges, include_header=True)
+    start_row = end_row
+
 
 text = [f'',
         f'',
@@ -490,8 +534,29 @@ for line in text:
                          line_spacing=22, space_after=0, space_before=0)
 
 df5_2, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.2')
-add_header(doc, f'Таблица {table5_2:.1f} Характеристика керосиновой фракции - сырья блока «Demerus Jet»')
-add_table(doc, df5_2, merged_ranges)
+
+header_text_first = f'Таблица {table5_2:.1f} – Характеристика керосиновой фракции - сырья блока «Demerus Jet»'
+header_text_next = f'Продолжение таблицы {table5_2:.1f} – Характеристика керосиновой фракции - сырья блока «Demerus Jet»'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 100  # Количество строк для следующих таблиц
+
+total_rows = len(df5_2)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df5_2, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df5_2, start_row, end_row, merged_ranges, include_header=True)
+    start_row = end_row
 
 text = [f'',
         f'Целевым продуктом блока "Demerus Jet" является керосиновая фракция с массовой долей меркаптановой серы не более 30 ppm, сероводород – отсутствие. Концентрация общей серы остается без изменений в диапазоне 0,114÷0,116 % мас.',
@@ -523,8 +588,29 @@ for line in text:
                          line_spacing=22, space_after=0, space_before=0)
 
 df5_3, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.3')
-add_header(doc, f'Таблица {table5_3:.1f} Характеристика керосиновой фракции - сырья блока «Demerus Jet»')
-add_table(doc, df5_3, merged_ranges)
+
+header_text_first = f'Таблица {table5_3:.1f} – Характеристика керосиновой фракции - сырья блока «Demerus Jet»'
+header_text_next = f'Продолжение таблицы {table5_3:.1f} – Характеристика керосиновой фракции - сырья блока «Demerus Jet»'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 100  # Количество строк для следующих таблиц
+
+total_rows = len(df5_3)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df5_3, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df5_3, start_row, end_row, merged_ranges, include_header=True)
+    start_row = end_row
 
 text = [f'']
 
@@ -537,8 +623,29 @@ for line in text:
                          line_spacing=22, space_after=0, space_before=0)
 
 df5_4, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.4')
-add_header(doc, f'Таблица {table5_4:.1f} – Физико-химические характеристики КСП (ж)')
-add_table(doc, df5_4, merged_ranges)
+
+header_text_first = f'Таблица {table5_4:.1f} – Физико-химические характеристики КСП (ж)'
+header_text_next = f'Продолжение таблицы {table5_4:.1f} – Физико-химические характеристики КСП (ж)'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 100  # Количество строк для следующих таблиц
+
+total_rows = len(df5_4)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df5_4, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df5_4, start_row, end_row, merged_ranges, include_header=True)
+    start_row = end_row
 
 text = [f''
        ]
@@ -563,8 +670,29 @@ if new_section.page_width < new_section.page_height:
     new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
 
 df5_5, merged_ranges = read_excel_with_merged_cells('database.xlsx', '5.5')
-add_header(doc, f'Таблица {table5_5:.1f} – Характеристика основных и вспомогательных материалов')
-add_table(doc, df5_5, merged_ranges)
+
+header_text_first = f'Таблица {table5_5:.1f} – Характеристика основных и вспомогательных материалов'
+header_text_next = f'Продолжение таблицы {table5_5:.1f} – Характеристика основных и вспомогательных материалов'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 5  # Количество строк для следующих таблиц
+
+total_rows = len(df5_5)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df5_5, start_row, end_row, merged_ranges, include_header=False)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df5_5, start_row, end_row, merged_ranges, include_header=False)
+    start_row = end_row
 
 text = [f''
        ]
@@ -630,8 +758,29 @@ table6_2 = table_counter.increment()
 table6_3 = table_counter.increment()
 
 df6_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '6.1')
-add_header(doc, f'Таблица {table6_1:.1f} – Характеристика побочных продуктов и выбросов в пересчёте на тонну перерабатываемого сырья')
-add_table(doc, df6_1, merged_ranges)
+
+header_text_first = f'Таблица {table6_1:.1f} – Характеристика побочных продуктов и выбросов в пересчёте на тонну перерабатываемого сырья'
+header_text_next = f'Продолжение таблицы {table6_1:.1f} – Характеристика побочных продуктов и выбросов в пересчёте на тонну перерабатываемого сырья'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 100  # Количество строк для следующих таблиц
+
+total_rows = len(df6_1)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df6_1, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df6_1, start_row, end_row, merged_ranges, include_header=True)
+    start_row = end_row
 
 text = [f''
        ]
@@ -645,8 +794,29 @@ for line in text:
                          line_spacing=22, space_after=0, space_before=0)
 
 df6_2, merged_ranges = read_excel_with_merged_cells('database.xlsx', '6.2')
-add_header(doc, f'Таблица {table6_2:.1f} – Техническая характеристика побочных продуктов')
-add_table(doc, df6_2, merged_ranges)
+
+header_text_first = f'Таблица {table6_2:.1f} – Техническая характеристика побочных продуктов'
+header_text_next = f'Продолжение таблицы {table6_2:.1f} – Техническая характеристика побочных продуктов'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 100  # Количество строк для следующих таблиц
+
+total_rows = len(df6_2)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df6_2, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df6_2, start_row, end_row, merged_ranges, include_header=True)
+    start_row = end_row
 
 text = [f''
        ]
@@ -660,8 +830,29 @@ for line in text:
                          line_spacing=22, space_after=0, space_before=0)
 
 df6_3, merged_ranges = read_excel_with_merged_cells('database.xlsx', '6.3')
-add_header(doc, f'Таблица {table6_3:.1f} – Условия сбора, хранения, транспортирования, складирования и захоронения отходов')
-add_table(doc, df6_3, merged_ranges)
+
+header_text_first = f'Таблица {table6_3:.1f} – Условия сбора, хранения, транспортирования, складирования и захоронения отходов'
+header_text_next = f'Продолжение таблицы {table6_3:.1f} – Условия сбора, хранения, транспортирования, складирования и захоронения отходов'
+
+rows_per_page_first = 100  # Количество строк для первой таблицы
+rows_per_page_next = 100  # Количество строк для следующих таблиц
+
+total_rows = len(df6_3)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df6_3, start_row, end_row, merged_ranges, include_header=True)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df6_3, start_row, end_row, merged_ranges, include_header=True)
+    start_row = end_row
 
 text = [f''
        ]
@@ -733,8 +924,29 @@ table10_2 = table_counter.increment()
 table10_3 = table_counter.increment()
 
 df10_1, merged_ranges = read_excel_with_merged_cells('database.xlsx', '10.1')
-add_header(doc, f'Таблица {table10_1:.1f} – Материальный баланс установки демеркаптанизации керосиновой фракции')
-add_table(doc, df10_1, merged_ranges)
+
+header_text_first = f'Таблица {table10_1:.1f} – Материальный баланс установки демеркаптанизации керосиновой фракции'
+header_text_next = f'Продолжение таблицы {table10_1:.1f} – Материальный баланс установки демеркаптанизации керосиновой фракции'
+
+rows_per_page_first = 18  # Количество строк для первой таблицы
+rows_per_page_next = 18  # Количество строк для следующих таблиц
+
+total_rows = len(df10_1)
+start_row = 0
+
+# Первая таблица с заголовком
+end_row = min(start_row + rows_per_page_first, total_rows)
+add_header(doc, header_text_first)
+add_table(doc, df10_1, start_row, end_row, merged_ranges, include_header=False)
+start_row = end_row
+
+# Последующие таблицы без заголовка
+while start_row < total_rows:
+    end_row = min(start_row + rows_per_page_next, total_rows)
+    insert_page_break(doc)
+    add_header(doc, header_text_next)
+    add_table(doc, df10_1, start_row, end_row, merged_ranges, include_header=False)
+    start_row = end_row
 
 #-----------------------------------------------------------------------------------------------------------------------
 
